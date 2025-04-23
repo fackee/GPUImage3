@@ -2,14 +2,15 @@
 #include "OperationShaderTypes.h"
 using namespace metal;
 
-struct VertexInput {
-    float4 position [[position]];
-    float2 textureCoordinate;
-};
+typedef struct
+{
+    float threshold;
+} CannyEdgeDetectionUniform;
+
 
 fragment float4 cannyEdgeDetectionFragment(SingleInputVertexIO fragmentInput [[stage_in]],
                                          texture2d<float> inputTexture [[texture(0)]],
-                                         constant float &threshold [[buffer(0)]]) {
+                                         constant CannyEdgeDetectionUniform& uniform [[ buffer(1) ]]) {
     constexpr sampler quadSampler;
     float2 singleStepOffset = float2(1.0 / float(inputTexture.get_width()), 1.0 / float(inputTexture.get_height()));
     
@@ -34,7 +35,7 @@ fragment float4 cannyEdgeDetectionFragment(SingleInputVertexIO fragmentInput [[s
     float r1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + float2(cos(angle) * singleStepOffset.x, sin(angle) * singleStepOffset.y)).r;
     float r2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + float2(-cos(angle) * singleStepOffset.x, -sin(angle) * singleStepOffset.y)).r;
     
-    float edge = (magnitude > threshold && magnitude > r1 && magnitude > r2) ? 1.0 : 0.0;
+    float edge = (magnitude > uniform.threshold && magnitude > r1 && magnitude > r2) ? 1.0 : 0.0;
     
     return float4(float3(edge), 1.0);
 } 

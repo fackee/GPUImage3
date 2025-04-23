@@ -17,19 +17,24 @@ float3 hsv2rgb(float3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+typedef struct
+{
+    float brightness;
+    float saturation;
+} HSBFilterUniform;
+
 fragment float4 hsbFilterFragment(SingleInputVertexIO fragmentInput [[stage_in]],
                                 texture2d<float> inputTexture [[texture(0)]],
-                                constant float &brightness [[buffer(0)]],
-                                constant float &saturation [[buffer(1)]]) {
+                               constant HSBFilterUniform& uniform [[ buffer(1) ]]) {
     constexpr sampler quadSampler;
     float4 textureColor = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate);
     float3 hsv = rgb2hsv(textureColor.rgb);
     
     // 调整亮度
-    hsv.z *= brightness;
+    hsv.z *= uniform.brightness;
     
     // 调整饱和度
-    hsv.y *= saturation;
+    hsv.y *= uniform.saturation;
     
     float3 rgb = hsv2rgb(hsv);
     return float4(rgb, textureColor.a);

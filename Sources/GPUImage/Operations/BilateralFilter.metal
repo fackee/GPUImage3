@@ -2,14 +2,14 @@
 #include "OperationShaderTypes.h"
 using namespace metal;
 
-struct VertexInput {
-    float4 position [[position]];
-    float2 textureCoordinate;
-};
+typedef struct
+{
+    float distanceNormalizationFactor;
+} BilateralFilterUniform;
 
 fragment float4 bilateralFilterFragment(SingleInputVertexIO fragmentInput [[stage_in]],
                                       texture2d<float> inputTexture [[texture(0)]],
-                                      constant float &distanceNormalizationFactor [[buffer(0)]]) {
+                                      constant BilateralFilterUniform& uniform [[ buffer(1) ]]) {
     constexpr sampler quadSampler;
     float2 singleStepOffset = float2(1.0 / float(inputTexture.get_width()), 1.0 / float(inputTexture.get_height()));
     float4 centerColor = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate);
@@ -20,7 +20,7 @@ fragment float4 bilateralFilterFragment(SingleInputVertexIO fragmentInput [[stag
         for(int j = -2; j <= 2; j++) {
             float2 offset = float2(float(i), float(j)) * singleStepOffset;
             float4 color = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + offset);
-            float weight = exp(-(float(i * i + j * j) / (2.0 * distanceNormalizationFactor * distanceNormalizationFactor)));
+            float weight = exp(-(float(i * i + j * j) / (2.0 * uniform.distanceNormalizationFactor * uniform.distanceNormalizationFactor)));
             float colorWeight = length(color.rgb - centerColor.rgb);
             weight *= exp(-(colorWeight * colorWeight) / (2.0 * 0.1 * 0.1));
             blurColor += color * weight;

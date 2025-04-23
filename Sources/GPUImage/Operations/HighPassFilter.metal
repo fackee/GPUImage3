@@ -9,7 +9,7 @@ typedef struct
 
 fragment float4 highPassFragment(SingleInputVertexIO fragmentInput [[stage_in]],
                                texture2d<float> inputTexture [[texture(0)]],
-                               constant HighPassUniform& uniform [[ buffer(1) ]])
+                               constant HighPassUniform& uniform [[ buffer(1) ]]) {
     constexpr sampler quadSampler;
     float2 singleStepOffset = float2(1.0 / float(inputTexture.get_width()), 1.0 / float(inputTexture.get_height()));
     float4 centerColor = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate);

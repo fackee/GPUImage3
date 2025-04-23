@@ -1,17 +1,15 @@
-public class HighPassFilter: OperationGroup {
-    public var strength: Float = 0.5 { didSet { lowPass.strength = strength } }
+import Foundation
+import Metal
 
-    let lowPass = LowPassFilter()
-    let differenceBlend = DifferenceBlend()
-
-    public override init() {
-        super.init()
-
-        ({ strength = 0.5 })()
-
-        self.configureGroup { input, output in
-            input --> self.differenceBlend
-            input --> self.lowPass --> self.differenceBlend --> output
+public class HighPassFilter: BasicOperation {
+    public var radius: Float = 1.0 {
+        didSet {
+            uniformSettings["radius"] = radius
         }
+    }
+    
+    public init() {
+        super.init(fragmentFunctionName: "highPassFragment", numberOfInputs: 1)
+        ({ radius = 1.0 })()
     }
 }

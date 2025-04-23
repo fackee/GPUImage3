@@ -5,7 +5,6 @@ using namespace metal;
 typedef struct
 {
     float blurRadius;
-    float2 direction;
 } SurfaceBlurUniform;
 
 fragment float4 surfaceBlurFragment(SingleInputVertexIO fragmentInput [[stage_in]],
@@ -24,24 +23,37 @@ fragment float4 surfaceBlurFragment(SingleInputVertexIO fragmentInput [[stage_in
     blurColor += centerColor * weights[0];
     weightSum += weights[0];
     
-    // 只采样5个点，使用高斯权重
+    // 水平和垂直方向的采样
     for(int i = 1; i < 5; i++) {
-        float2 offset = float2(float(i)) * singleStepOffset * uniform.direction;
-        float4 color1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + offset);
-        float4 color2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate - offset);
+        float2 offset = float2(float(i)) * singleStepOffset * uniform.blurRadius;
+        
+        // 水平方向
+        float2 horizontalOffset = float2(offset.x, 0.0);
+        float4 colorH1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + horizontalOffset);
+        float4 colorH2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate - horizontalOffset);
+        
+        // 垂直方向
+        float2 verticalOffset = float2(0.0, offset.y);
+        float4 colorV1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + verticalOffset);
+        float4 colorV2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate - verticalOffset);
         
         float weight = weights[i];
-        float colorWeight1 = length(color1.rgb - centerColor.rgb);
-        float colorWeight2 = length(color2.rgb - centerColor.rgb);
         
-        weight *= exp(-(colorWeight1 * colorWeight1) / (2.0 * 0.1 * 0.1));
-        blurColor += color1 * weight;
-        weightSum += weight;
+        // 计算颜色权重
+        float colorWeightH1 = length(colorH1.rgb - centerColor.rgb);
+        float colorWeightH2 = length(colorH2.rgb - centerColor.rgb);
+        float colorWeightV1 = length(colorV1.rgb - centerColor.rgb);
+        float colorWeightV2 = length(colorV2.rgb - centerColor.rgb);
         
-        weight = weights[i];
-        weight *= exp(-(colorWeight2 * colorWeight2) / (2.0 * 0.1 * 0.1));
-        blurColor += color2 * weight;
-        weightSum += weight;
+        // 应用高斯权重
+        float finalWeightH1 = weight * exp(-(colorWeightH1 * colorWeightH1) / (2.0 * 0.1 * 0.1));
+        float finalWeightH2 = weight * exp(-(colorWeightH2 * colorWeightH2) / (2.0 * 0.1 * 0.1));
+        float finalWeightV1 = weight * exp(-(colorWeightV1 * colorWeightV1) / (2.0 * 0.1 * 0.1));
+        float finalWeightV2 = weight * exp(-(colorWeightV2 * colorWeightV2) / (2.0 * 0.1 * 0.1));
+        
+        blurColor += colorH1 * finalWeightH1 + colorH2 * finalWeightH2 + 
+                    colorV1 * finalWeightV1 + colorV2 * finalWeightV2;
+        weightSum += finalWeightH1 + finalWeightH2 + finalWeightV1 + finalWeightV2;
     }
     
     return blurColor / weightSum;

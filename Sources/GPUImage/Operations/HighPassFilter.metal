@@ -5,7 +5,6 @@ using namespace metal;
 typedef struct
 {
     float radius;
-    float2 direction;
 } HighPassUniform;
 
 fragment float4 highPassFragment(SingleInputVertexIO fragmentInput [[stage_in]],
@@ -24,15 +23,23 @@ fragment float4 highPassFragment(SingleInputVertexIO fragmentInput [[stage_in]],
     blurColor += centerColor * weights[0];
     weightSum += weights[0];
     
-    // 只采样5个点，使用高斯权重
+    // 水平和垂直方向的采样
     for(int i = 1; i < 5; i++) {
-        float2 offset = float2(float(i)) * singleStepOffset * uniform.direction;
-        float4 color1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + offset);
-        float4 color2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate - offset);
+        float2 offset = float2(float(i)) * singleStepOffset * uniform.radius;
+        
+        // 水平方向
+        float2 horizontalOffset = float2(offset.x, 0.0);
+        float4 colorH1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + horizontalOffset);
+        float4 colorH2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate - horizontalOffset);
+        
+        // 垂直方向
+        float2 verticalOffset = float2(0.0, offset.y);
+        float4 colorV1 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate + verticalOffset);
+        float4 colorV2 = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate - verticalOffset);
         
         float weight = weights[i];
-        blurColor += (color1 + color2) * weight;
-        weightSum += weight * 2.0;
+        blurColor += (colorH1 + colorH2 + colorV1 + colorV2) * weight;
+        weightSum += weight * 4.0;
     }
     
     float4 blurredColor = blurColor / weightSum;

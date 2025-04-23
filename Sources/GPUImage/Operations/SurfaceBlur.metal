@@ -4,7 +4,7 @@ using namespace metal;
 
 typedef struct
 {
-    float4 blurRadius;
+    float blurRadius;
 } SurfaceBlurUniform;
 
 fragment float4 surfaceBlurFragment(SingleInputVertexIO fragmentInput [[stage_in]],

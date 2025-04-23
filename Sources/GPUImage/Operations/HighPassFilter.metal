@@ -4,7 +4,7 @@ using namespace metal;
 
 typedef struct
 {
-    float4 radius;
+    float radius;
 } HighPassUniform;
 
 fragment float4 highPassFragment(SingleInputVertexIO fragmentInput [[stage_in]],

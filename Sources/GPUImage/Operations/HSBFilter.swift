@@ -16,5 +16,7 @@ public class HSBFilter: BasicOperation {
     
     public init() {
         super.init(fragmentFunctionName: "hsbFilterFragment", numberOfInputs: 1)
+        ({ brightness = 1.0 })()
+        ({ saturation = 1.0 })()
     }
 } 

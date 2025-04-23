@@ -10,5 +10,6 @@ public class BilateralFilter: BasicOperation {
     
     public init() {
         super.init(fragmentFunctionName: "bilateralFilterFragment", numberOfInputs: 1)
+        ({ distanceNormalizationFactor = 4.0 })()
     }
 } 
